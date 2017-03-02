@@ -1,10 +1,10 @@
 /*!
  * @fileoverview tui.chart
  * @author NHN Ent. FE Development Lab <dl_javascript@nhnent.com>
- * @version 2.7.3
+ * @version 2.7.4
  * @license MIT
  * @link https://github.com/nhnent/tui.chart
- * bundle created at "Thu Feb 23 2017 18:45:18 GMT+0900 (KST)"
+ * bundle created at "Thu Mar 02 2017 15:23:17 GMT+0900 (KST)"
  */
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -2990,7 +2990,7 @@
 
 	        tui.util.forEach(toTheme, function(item, key) {
 	            var fromItem = fromTheme[key];
-	            if (!fromItem) {
+	            if (!fromItem && fromItem !== 0) {
 	                return;
 	            }
 
@@ -4389,7 +4389,7 @@
 	            scaleOption: this.getScaleOption(),
 	            isVertical: this.isVertical,
 	            hasRightYAxis: this.hasRightYAxis,
-	            addedDataCount: this.addedDataCount,
+	            addedDataCount: this._dynamicDataHelper ? this._dynamicDataHelper.addedDataCount : null,
 	            prevXAxisData: prevXAxisData,
 	            addingDataMode: addingDataMode
 	        });
@@ -4402,12 +4402,11 @@
 	    addDataRatios: function() {},
 
 	    /**
-	     * Common render function for rendering functions like render, rerender, resize and zoom.
-	     * @param {function} onRender render callback function
+	     * Make chart ready for render, it should be invoked before render, rerender, resize and zoom.
 	     * @param {?boolean} addingDataMode - whether adding data mode or not
-	     * @private
+	     * @returns {object} Bounds and scale data
 	     */
-	    _render: function(onRender, addingDataMode) {
+	    readyForRender: function(addingDataMode) {
 	        var boundsAndScale = this._buildBoundsAndScaleData(this.prevXAxisData, addingDataMode);
 
 	        if (boundsAndScale.axisDataMap.xAxis) {
@@ -4417,7 +4416,7 @@
 	        // 비율값 추가
 	        this.addDataRatios(boundsAndScale.limitMap);
 
-	        onRender(boundsAndScale);
+	        return boundsAndScale;
 	    },
 
 	    /**
@@ -4431,6 +4430,7 @@
 	        var seriesVisibilityMap = dataProcessor.getLegendVisibility();
 	        var rawData = rawDataHandler.filterCheckedRawData(dataProcessor.rawData, seriesVisibilityMap);
 	        var raphaelPaper = componentManager.drawingToolPicker.getPaper(container, chartConst.COMPONENT_TYPE_RAPHAEL);
+	        var boundsAndScale;
 
 	        this.dataProcessor.initData(rawData);
 
@@ -4440,12 +4440,12 @@
 
 	        dom.append(wrapper, container);
 
-	        this._render(function(boundsAndScale) {
-	            renderUtil.renderDimension(container, boundsAndScale.dimensionMap.chart);
-	            componentManager.render('render', boundsAndScale, {
-	                checkedLegends: seriesVisibilityMap
-	            }, container);
-	        });
+	        boundsAndScale = this.readyForRender();
+
+	        renderUtil.renderDimension(container, boundsAndScale.dimensionMap.chart);
+	        componentManager.render('render', boundsAndScale, {
+	            checkedLegends: seriesVisibilityMap
+	        }, container);
 
 	        this.chartContainer = container;
 	    },
@@ -4456,8 +4456,8 @@
 	     * @param {?object} rawData rawData
 	     */
 	    rerender: function(checkedLegends, rawData) {
-	        var self = this;
 	        var dataProcessor = this.dataProcessor;
+	        var boundsAndScale;
 
 	        if (!rawData) {
 	            rawData = rawDataHandler.filterCheckedRawData(dataProcessor.getZoomedRawData(), checkedLegends);
@@ -4465,11 +4465,11 @@
 
 	        this.dataProcessor.initData(rawData);
 
-	        this._render(function(boundsAndScale) {
-	            self.componentManager.render('rerender', boundsAndScale, {
-	                checkedLegends: checkedLegends
-	            }, self.chartContainer);
-	        });
+	        boundsAndScale = this.readyForRender();
+
+	        this.componentManager.render('rerender', boundsAndScale, {
+	            checkedLegends: checkedLegends
+	        }, this.chartContainer);
 	    },
 
 	    /**
@@ -4533,8 +4533,7 @@
 	     * @api
 	     */
 	    resize: function(dimension) {
-	        var self = this;
-	        var updated;
+	        var updated, boundsAndScale;
 
 	        if (!dimension) {
 	            return;
@@ -4546,10 +4545,10 @@
 	            return;
 	        }
 
-	        this._render(function(boundsAndScale) {
-	            renderUtil.renderDimension(self.chartContainer, boundsAndScale.dimensionMap.chart);
-	            self.componentManager.render('resize', boundsAndScale);
-	        });
+	        boundsAndScale = this.readyForRender();
+
+	        renderUtil.renderDimension(this.chartContainer, boundsAndScale.dimensionMap.chart);
+	        this.componentManager.render('resize', boundsAndScale);
 	    },
 
 	    /**
@@ -5121,6 +5120,12 @@
 	        this.isYAxis = params.isYAxis;
 
 	        /**
+	         * Whether data dynamic shifting or not.
+	         * @type {boolean}
+	         */
+	        this.shifting = params.shifting;
+
+	        /**
 	         * cached axis data
 	         * @type {object}
 	         */
@@ -5601,6 +5606,7 @@
 	    var name = axisParam.name;
 
 	    axisParam.isYAxis = (name === 'yAxis');
+	    axisParam.shifting = axisParam.chartOptions.series.shifting;
 
 	    // 콤보에서 YAxis가 시리즈별로 두개인 경우를 고려해 시리즈이름으로 테마가 분기된다.
 	    // 나중에 테마에서 시리즈로 다시 분기되는게 아니라 커포넌트 네임인 rightYAxis로 따로 받도록 테마 구조를 변경하자.
@@ -26886,12 +26892,14 @@
 	    addComponents: function() {
 	        this.componentManager.register('title', 'title');
 	        this.componentManager.register('plot', 'plot');
+
+	        this.componentManager.register('lineSeries', 'lineSeries');
+
 	        this.componentManager.register('yAxis', 'axis');
 	        this.componentManager.register('xAxis', 'axis');
 
 	        this.componentManager.register('legend', 'legend');
 
-	        this.componentManager.register('lineSeries', 'lineSeries');
 	        this.componentManager.register('chartExportMenu', 'chartExportMenu');
 
 	        this.componentManager.register('tooltip', 'tooltip');
@@ -26966,12 +26974,10 @@
 	     * @private
 	     */
 	    _renderForZoom: function(isResetZoom) {
-	        var self = this;
+	        var boundsAndScale = this.readyForRender();
 
-	        this._render(function(boundsAndScale) {
-	            self.componentManager.render('zoom', boundsAndScale, {
-	                isResetZoom: isResetZoom
-	            });
+	        this.componentManager.render('zoom', boundsAndScale, {
+	            isResetZoom: isResetZoom
 	        });
 	    },
 
@@ -27096,19 +27102,18 @@
 	     */
 	    _animateForAddingData: function() {
 	        var chart = this.chart;
-	        var self = this;
+	        var boundsAndScale = chart.readyForRender(true);
 	        var shiftingOption = !!this.chart.options.series.shifting;
+	        var tickSize;
 
 	        this.addedDataCount += 1;
 
-	        chart._render(function(boundsAndScale) {
-	            var tickSize = self._calculateAnimateTickSize(boundsAndScale.dimensionMap.xAxis.width);
+	        tickSize = this._calculateAnimateTickSize(boundsAndScale.dimensionMap.xAxis.width);
 
-	            chart.componentManager.render('animateForAddingData', boundsAndScale, {
-	                tickSize: tickSize,
-	                shifting: shiftingOption
-	            });
-	        }, true);
+	        chart.componentManager.render('animateForAddingData', boundsAndScale, {
+	            tickSize: tickSize,
+	            shifting: shiftingOption
+	        });
 
 	        if (shiftingOption) {
 	            chart.dataProcessor.shiftData();
@@ -27121,10 +27126,8 @@
 	     */
 	    _rerenderForAddingData: function() {
 	        var chart = this.chart;
-
-	        chart._render(function(boundsAndScale) {
-	            chart.componentManager.render('rerender', boundsAndScale);
-	        });
+	        var boundsAndScale = chart.readyForRender();
+	        chart.componentManager.render('rerender', boundsAndScale);
 	    },
 
 	    /**
@@ -27427,12 +27430,10 @@
 	     * @private
 	     */
 	    _renderForZoom: function(isResetZoom) {
-	        var self = this;
+	        var boundsAndScale = this.readyForRender();
 
-	        this._render(function(boundsAndScale) {
-	            self.componentManager.render('zoom', boundsAndScale, {
-	                isResetZoom: isResetZoom
-	            });
+	        this.componentManager.render('zoom', boundsAndScale, {
+	            isResetZoom: isResetZoom
 	        });
 	    },
 
@@ -28133,12 +28134,10 @@
 	     * @private
 	     */
 	    _renderForZoom: function(isResetZoom) {
-	        var self = this;
+	        var boundsAndScale = this.readyForRender();
 
-	        this._render(function(boundsAndScale) {
-	            self.componentManager.render('zoom', boundsAndScale, {
-	                isResetZoom: isResetZoom
-	            });
+	        this.componentManager.render('zoom', boundsAndScale, {
+	            isResetZoom: isResetZoom
 	        });
 	    },
 
@@ -32831,6 +32830,7 @@
 	            'font-family': theme.fontFamily,
 	            'font-weight': theme.fontWeight,
 	            'text-anchor': 'middle',
+	            fill: theme.color,
 	            opacity: 0
 	        };
 
@@ -34862,12 +34862,12 @@
 	     * @private
 	     */
 	    renderBackground: function(paper, position, dimension, theme) {
-	        var background = (theme.background || {});
+	        var background = ((theme && theme.background) || {});
 	        var fillColor = (background.color || '#fff');
 	        var opacity = (background.opacity || 1);
 
 	        raphaelRenderUtil.renderRect(paper, {
-	            left: position.left - 5,
+	            left: position.left - 4,
 	            top: position.top,
 	            width: dimension.width,
 	            height: dimension.height
@@ -34921,7 +34921,7 @@
 	            positionTopAndLeft.left = data.layout.position.left + textHeight;
 
 	            if (rotateTitle) {
-	                attributes.transform = 'r-90,' + positionTopAndLeft.left + ',' + positionTopAndLeft.top;
+	                attributes.transform = 'r-90,' + (positionTopAndLeft.left - textHeight) + ',' + positionTopAndLeft.top;
 	            }
 	        } else {
 	            positionTopAndLeft.top = paper.height - textHeight;
