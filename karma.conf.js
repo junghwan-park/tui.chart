@@ -1,9 +1,112 @@
 'use strict';
 
 var path = require('path');
+var pkg = require('./package.json');
+
+var webdriverConfig = {
+    hostname: 'fe.nhnent.com',
+    port: 4444,
+    remoteHost: true
+};
+
+/* eslint no-process-env: 0, camelcase: 0 */
+
+function setConfig(defaultConfig, server, browser) {
+    if (server === 'ne') {
+        defaultConfig.customLaunchers = {
+            IE8: {
+                base: 'WebDriver',
+                config: webdriverConfig,
+                browserName: 'internet explorer',
+                version: 8
+            },
+            IE9: {
+                base: 'WebDriver',
+                config: webdriverConfig,
+                browserName: 'internet explorer',
+                version: 9
+            },
+            IE10: {
+                base: 'WebDriver',
+                config: webdriverConfig,
+                browserName: 'internet explorer',
+                version: 10
+            },
+            IE11: {
+                base: 'WebDriver',
+                config: webdriverConfig,
+                browserName: 'internet explorer',
+                version: 11
+            },
+            'Chrome-WebDriver': {
+                base: 'WebDriver',
+                config: webdriverConfig,
+                browserName: 'chrome'
+            }
+        };
+
+        defaultConfig.concurrency = 5;
+
+        defaultConfig.reporters = [
+            'dots',
+            'coverage',
+            'junit'
+        ];
+
+        defaultConfig.browsers = browser || [/* 'IE8', */'IE9', 'IE10', 'IE11', 'Chrome-WebDriver'];
+    } else if (server === 'sl') {
+        defaultConfig.sauceLabs = {
+            testName: pkg.name + ' ::: ' + pkg.version + ' ::: ' + new Date().toLocaleDateString('en-US'),
+            username: process.env.SAUCE_USERNAME,
+            accessKey: process.env.SAUCE_ACCESS_KEY,
+            startConnect: true,
+            tags: [pkg.name, pkg.version],
+            build: pkg.version,
+            passed: true,
+            recordVideo: true,
+            recordScreenshots: true,
+            recordLogs: true,
+            webdriverRemoteQuietExceptions: true
+        };
+
+        defaultConfig.customLaunchers = {
+            sl_chrome: {
+                base: 'SauceLabs',
+                browserName: 'chrome',
+                platform: 'Linux',
+                version: '48'
+            },
+            sl_ie_10: {
+                base: 'SauceLabs',
+                browserName: 'internet explorer',
+                platform: 'Windows 8',
+                version: '10'
+            },
+            sl_ie_11: {
+                base: 'SauceLabs',
+                browserName: 'internet explorer',
+                platform: 'Windows 8.1',
+                version: '11'
+            }
+        };
+        defaultConfig.reporters = ['narrow'];
+
+        defaultConfig.browsers = browser || ['sl_chrome', 'sl_ie_10', 'sl_ie_11'];
+
+        defaultConfig.browserNoActivityTimeout = 30000;
+    } else {
+        defaultConfig.browsers = ['PhantomJS'];
+        defaultConfig.singleRun = false;
+
+        // test results reporter to use
+        // possible values: 'dots', 'progress'
+        // available reporters: https://npmjs.org/browse/keyword/karma-reporter
+        defaultConfig.reporters = ['saucelabs'];
+    }
+}
 
 module.exports = function(config) {
-    config.set({
+    var defaultConfig = {
         // base path that will be used to resolve all patterns (eg. files, exclude)
         basePath: '',
 
@@ -13,23 +116,30 @@ module.exports = function(config) {
 
         plugins: [
             'karma-jasmine',
+            'karma-coverage',
+            'karma-junit-reporter',
             'karma-webpack',
             'karma-sourcemap-loader',
+            'karma-webdriver-launcher',
             'karma-phantomjs-launcher',
+            'karma-sauce-launcher',
             'karma-narrow-reporter'
         ],
 
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-        frameworks: [
-            'jasmine'
-        ],
+        frameworks: ['jasmine'],
 
         // list of files / patterns to load in the browser
         files: [
-            {pattern: 'lib/tui-code-snippet/code-snippet.js', watched: false},
-            {pattern: 'lib/raphael/raphael.js', watched: false},
-
+            {
+                pattern: 'lib/tui-code-snippet/code-snippet.js',
+                watched: false
+            },
+            {
+                pattern: 'lib/raphael/raphael.js',
+                watched: false
+            },
             'test/test.bundle.js'
         ],
 
@@ -63,13 +173,6 @@ module.exports = function(config) {
                 colors: true
             }
         },
-
-        // test results reporter to use
-        // possible values: 'dots', 'progress'
-        // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-        reporters: [
-            'narrow'
-        ],
 
         // optionally, configure the reporter
         coverageReporter: {
@@ -112,13 +215,11 @@ module.exports = function(config) {
 
         autoWatchBatchDelay: 100,
 
-        // start these browsers
-        // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-        browsers: [
-            'PhantomJS'
-        ],
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
-        singleRun: false
-    });
+        singleRun: true
+    };
+
+    setConfig(defaultConfig, process.env.SERVER, process.env.BROWSER);
+    config.set(defaultConfig);
 };
