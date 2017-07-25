@@ -99,7 +99,7 @@ function setConfig(defaultConfig, server, browser) {
 
         defaultConfig.browsers = browser || ['sl_chrome', 'sl_ie_9', 'sl_ie_10', 'sl_ie_11'];
 
-        defaultConfig.browserNoActivityTimeout = 30000;
+        defaultConfig.browserNoActivityTimeout = 10000;
     } else {
         defaultConfig.browsers = ['PhantomJS'];
         defaultConfig.singleRun = false;
