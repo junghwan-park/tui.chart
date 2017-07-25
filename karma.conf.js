@@ -73,25 +73,31 @@ function setConfig(defaultConfig, server, browser) {
             sl_chrome: {
                 base: 'SauceLabs',
                 browserName: 'chrome',
-                platform: 'macOs 10.12',
+                platform: 'Windows 7',
                 version: '59.0'
+            },
+            sl_ie_9: {
+                base: 'SauceLabs',
+                browserName: 'internet explorer',
+                platform: 'Windows 7',
+                version: '9'
             },
             sl_ie_10: {
                 base: 'SauceLabs',
                 browserName: 'internet explorer',
-                platform: 'Windows 8',
+                platform: 'Windows 7',
                 version: '10'
             },
             sl_ie_11: {
                 base: 'SauceLabs',
                 browserName: 'internet explorer',
-                platform: 'Windows 8.1',
+                platform: 'Windows 10',
                 version: '11'
             }
         };
         defaultConfig.reporters = ['dots', 'coverage', 'junit', 'saucelabs'];
 
-        defaultConfig.browsers = browser || ['sl_chrome', 'sl_ie_10', 'sl_ie_11'];
+        defaultConfig.browsers = browser || ['sl_chrome', 'sl_ie_9', 'sl_ie_10', 'sl_ie_11'];
 
         defaultConfig.browserNoActivityTimeout = 30000;
     } else {
