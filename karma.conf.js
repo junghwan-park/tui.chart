@@ -89,7 +89,7 @@ function setConfig(defaultConfig, server, browser) {
                 version: '11'
             }
         };
-        defaultConfig.reporters = ['coverage', 'junit', 'saucelabs'];
+        defaultConfig.reporters = ['dots', 'coverage', 'junit', 'saucelabs'];
 
         defaultConfig.browsers = browser || ['sl_chrome', 'sl_ie_10', 'sl_ie_11'];
 
