@@ -2,11 +2,14 @@ language: node_js
 node_js:
 - '6'
 cache:
-- npm
-- bower
+  directories:
+    - "node_modules"
+    - "bower_components"
+before_install:
+- npm i -g npm@5.3.0
 install:
-- npm install -g bower
 - npm install
+- npm install -g bower
 - bower install
 script: npm run eslint && npm run test:sl
 env:
