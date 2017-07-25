@@ -4,9 +4,7 @@ node_js:
 cache:
   directories:
     - "node_modules"
-    - "bower_components"
-before_install:
-- npm i -g npm@5.3.0
+    - "lib"
 install:
 - npm install
 - npm install -g bower
