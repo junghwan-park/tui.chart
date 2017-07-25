@@ -73,8 +73,8 @@ function setConfig(defaultConfig, server, browser) {
             sl_chrome: {
                 base: 'SauceLabs',
                 browserName: 'chrome',
-                platform: 'Linux',
-                version: '48'
+                platform: 'macOs 10.12',
+                version: '59.0'
             },
             sl_ie_10: {
                 base: 'SauceLabs',
