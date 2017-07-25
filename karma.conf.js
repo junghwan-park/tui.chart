@@ -89,7 +89,7 @@ function setConfig(defaultConfig, server, browser) {
                 version: '11'
             }
         };
-        defaultConfig.reporters = ['narrow'];
+        defaultConfig.reporters = ['saucelabs', 'narrow'];
 
         defaultConfig.browsers = browser || ['sl_chrome', 'sl_ie_10', 'sl_ie_11'];
 
@@ -101,7 +101,7 @@ function setConfig(defaultConfig, server, browser) {
         // test results reporter to use
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-        defaultConfig.reporters = ['saucelabs'];
+        defaultConfig.reporters = ['narrow'];
     }
 }
 

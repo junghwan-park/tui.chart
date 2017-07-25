@@ -1,12 +1,14 @@
 language: node_js
 node_js:
 - '6'
+cache:
+- npm
+- bower
 install:
 - npm install -g bower
 - npm install
 - bower install
-script:
-- npm run eslint && npm run test:sl
+script: npm run eslint && npm run test:sl
 env:
   global:
   - secure: DIw9SFd7as3O50GQtHQEcP2T1BYEeyFT2I5rh1OeXFVaUSaZvh7nHIOqfwyc936q04hJx0D38zBEod6HfC+Q8fc903wxBEaZsLI96Pjc9yw3sYZtibFPjVxBiD6grPIcVHB21MXt5k1JUZBIlefc1xJ9z6+RI6Rfu+oTFapLpBnRpVWauDELKPx+pd2PRUrGE1QdeRL2f8W8jdzf3QjFVdqayYjiQ91E7WRPwSlLRlRbit5FAEtvOG0o9yeietj+Fxg6GIQgWqJOdltB7htyfuvJFeN386kleoXYXYI9SkQRsqu33rVcL+ZhPEVYiE8azQIsE+B7/bKSZgYtGOeDucH5OnzuKx9HqcWTa++yfb7nUoBPVijreuSzEltpdoZWmRw1lMHqBAO1tladqlxp3+zDzZZcA70PFSzfC8FBTzgfoavUVlQIlVJcSMH6bBkdf58T/x71wj7Oq+OJ7gAPaHUK4X+W6ONhnPYBZ63fn9XFLqRNAIpi3UmfWNDpg5J3tbKYdE6LBzpCjTaka0jjlYiFZnrNb6+inXz0IawKsib45HE5h0x73Sx3zeOEFXtM9acUHQdWvLKSTNEfB8kuYahN56VSJQIpp1HiS3F/NhRWFLQP2X6AvG+UCHpEuhi5UwEAVQ2vj85Zku0Bh1Mz84C50Q1OKAviSc7P0HfLKow=
